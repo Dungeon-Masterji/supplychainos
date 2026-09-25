@@ -2,7 +2,8 @@
 *.env
 connections.toml
 .snowflake/
-.streamlit/secrets.toml
+secrets.toml
+**/secrets.toml
 __pycache__/
 *.pyc
 logs/
