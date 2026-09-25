@@ -1,0 +1,31 @@
+question_id,question_text,metric,dimensions,filters,expected_rows,category,persona
+Q001,What is our overall on-time delivery?,on_time_delivery,none,is_valid_shipment=TRUE AND requested_delivery_date IS NOT NULL,1,simple_metric,general
+Q002,What is our overall fill rate?,fill_rate,none,none,1,simple_metric,general
+Q003,What are our current days of inventory?,days_of_inventory,none,snapshot_date = MAX(snapshot_date),1,simple_metric,general
+Q004,What is our total landed cost?,total_landed_cost,none,is_valid_shipment=TRUE,1,simple_metric,general
+Q005,What is our OTD?,on_time_delivery,none,is_valid_shipment=TRUE AND requested_delivery_date IS NOT NULL,1,simple_metric,general
+Q006,What is OTD by plant?,on_time_delivery,destination_plant_name,is_valid_shipment=TRUE AND requested_delivery_date IS NOT NULL,4,dimension_slicing,general
+Q007,What is OTD by supplier?,on_time_delivery,supplier_name,is_valid_shipment=TRUE AND requested_delivery_date IS NOT NULL,3,dimension_slicing,general
+Q008,What is fill rate by supplier?,fill_rate,supplier_name,none,3,dimension_slicing,general
+Q009,What is landed cost by supplier?,total_landed_cost,supplier_name,is_valid_shipment=TRUE,3,dimension_slicing,general
+Q010,What is DOI by plant?,days_of_inventory,plant_name,snapshot_date = MAX(snapshot_date),4,dimension_slicing,general
+Q011,Which suppliers have OTD below 90%?,on_time_delivery,supplier_name,OTD < 0.90,3,ranking_filtering,general
+Q012,Which suppliers have the highest landed cost?,total_landed_cost,supplier_name,ORDER BY landed_cost DESC,3,ranking_filtering,general
+Q013,Which parts have the lowest fill rate?,fill_rate,part_name,ORDER BY fill_rate ASC,3,ranking_filtering,general
+Q014,Which parts have fewer than 10 days of inventory?,days_of_inventory,part_name,DOI < 10 AND snapshot_date = MAX(snapshot_date),2,ranking_filtering,general
+Q015,Which plants have the most late shipments?,on_time_delivery,destination_plant_name,arrival_date > requested_delivery_date ORDER BY late_count DESC,4,ranking_filtering,general
+Q016,How has OTD changed by month?,on_time_delivery,departure_month,is_valid_shipment=TRUE AND requested_delivery_date IS NOT NULL,1,temporal_trend,general
+Q017,What was OTD last month?,on_time_delivery,none,departure_date in last calendar month,1,temporal_trend,general
+Q018,Compare OTD between the first and second week of April,on_time_delivery,departure_week,departure_date grouped by week in April 2024,1-2,temporal_trend,general
+Q019,Which week had the best fill rate?,fill_rate,order_week,ORDER BY fill_rate DESC LIMIT 1,1,temporal_trend,general
+Q020,Show inventory trend over the last 30 days,days_of_inventory,inventory_snapshot_date,all snapshot dates,30,temporal_trend,general
+Q021,Which suppliers have both poor OTD and high landed cost?,on_time_delivery + total_landed_cost,supplier_name,OTD < 0.70 AND landed_cost > median,1-3,cross_domain,general
+Q022,Which parts are causing inventory risk?,days_of_inventory,part_name + plant_name,DOI < 5 AND snapshot_date = MAX(snapshot_date),2-12,cross_domain,general
+Q023,Which plants are holding inventory for poorly performing suppliers?,days_of_inventory + on_time_delivery,plant_name + supplier_name,DOI > 0 AND OTD < 0.70,1-12,cross_domain,general
+Q024,Which late shipments are associated with high-risk routes?,on_time_delivery,origin_plant_name + destination_plant_name + risk_flag,risk_flag = High,13,cross_domain,general
+Q025,Show supplier performance including OTD and fill rate for parts with low inventory,on_time_delivery + fill_rate + days_of_inventory,supplier_name + part_name,DOI < 10,2-3,cross_domain,general
+Q026,Which suppliers have poor delivery performance?,on_time_delivery,supplier_name,OTD below target,3,persona_specific,planning
+Q027,How reliable are our suppliers?,on_time_delivery,supplier_name,none,3,persona_specific,procurement
+Q028,What percentage of shipments arrived on time?,on_time_delivery,none,is_valid_shipment=TRUE AND requested_delivery_date IS NOT NULL,1,persona_specific,logistics
+Q029,How well did suppliers fill orders?,fill_rate,supplier_name,none,3,persona_specific,planning
+Q030,What is the order fulfillment rate?,fill_rate,none,none,1,persona_specific,procurement

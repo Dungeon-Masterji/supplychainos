@@ -1,0 +1,7 @@
+supplier_id,supplier_name,product_id,parts_supplied,region,tier,reliability_score,lead_time_days
+supplier-1,Apex Components,product-1,Blue Triangles,AMERICAS,Tier 1,0.95,7
+supplier-2,Delta Parts Co,product-1,Blue Triangles,EMEA,Tier 2,0.87,14
+supplier-3,Pacific Materials,product-2,Red Squares,APAC,Tier 1,0.92,10
+supplier-4,Rhine Industries,product-2,Red Squares,EMEA,Tier 2,0.84,18
+supplier-5,Midwest Supply Inc,product-3,Yellow Circles,AMERICAS,Tier 1,0.97,5
+supplier-6,Eastern Logistics,product-3,Yellow Circles,APAC,Tier 2,0.81,22

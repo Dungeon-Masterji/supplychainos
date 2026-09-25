@@ -1,0 +1,12 @@
+[project]
+name = "supplychainos"
+version = "1.0.0"
+description = "Governed Supply Chain Intelligence powered by Snowflake"
+requires-python = ">=3.11"
+dependencies = [
+    "streamlit[snowflake]>=1.56.0",
+    "snowflake-connector-python>=3.3.0",
+    "altair>=5.5.0",
+    "pandas>=2.2.3",
+    "numpy>=1.26.0",
+]

@@ -1,0 +1,9 @@
+.env
+*.env
+connections.toml
+.snowflake/
+.streamlit/secrets.toml
+__pycache__/
+*.pyc
+logs/
+/tmp/

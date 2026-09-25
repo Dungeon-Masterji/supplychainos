@@ -1,0 +1,9 @@
+customer_id,customer_name,location_id,location_name,region,segment
+customer-1,Empire Manufacturing,location-new_york,New York Facility,AMERICAS,Strategic
+customer-2,Atlantic Industries,location-new_york,New York Facility,AMERICAS,Strategic
+customer-3,Great Lakes Corp,location-chicago,Chicago Facility,AMERICAS,Strategic
+customer-4,Windy City Logistics,location-chicago,Chicago Facility,AMERICAS,Premium
+customer-5,Gulf Coast Enterprises,location-houston,Houston Facility,AMERICAS,Premium
+customer-6,Lone Star Distribution,location-houston,Houston Facility,AMERICAS,Premium
+customer-7,Gateway Assembly,location-st_louis,St. Louis Facility,AMERICAS,Standard
+customer-8,Midwest Fabricators,location-st_louis,St. Louis Facility,AMERICAS,Standard

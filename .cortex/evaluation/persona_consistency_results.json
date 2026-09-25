@@ -1,0 +1,105 @@
+{
+  "generated": "2026-09-24T22:49:48.756815",
+  "agent": "SUPPLYCHAIN_DB.SEMANTIC.SUPPLYCHAINOS_AGENT",
+  "tolerance": 0.02,
+  "total_cases": 3,
+  "passed": 3,
+  "results": [
+    {
+      "test_id": 1,
+      "title": "ON-TIME DELIVERY \u2014 Apex Components",
+      "metric": "on_time_delivery",
+      "gold_value": 0.6867,
+      "verdict": "PASS",
+      "consistent": true,
+      "gold_match": true,
+      "personas": [
+        {
+          "persona": "Planning",
+          "question": "What is the delivery performance for Apex Components?",
+          "value": 0.6867,
+          "metric_in_sql": true,
+          "time_s": 29.1
+        },
+        {
+          "persona": "Procurement",
+          "question": "How reliable is Apex Components at on-time delivery?",
+          "value": 0.6867,
+          "metric_in_sql": true,
+          "time_s": 32.5
+        },
+        {
+          "persona": "Logistics",
+          "question": "What percentage of Apex Components shipments arrived on time?",
+          "value": 0.6867,
+          "metric_in_sql": true,
+          "time_s": 22.4
+        }
+      ]
+    },
+    {
+      "test_id": 2,
+      "title": "FILL RATE \u2014 Pacific Materials",
+      "metric": "fill_rate",
+      "gold_value": 1.1681,
+      "verdict": "PASS",
+      "consistent": true,
+      "gold_match": true,
+      "personas": [
+        {
+          "persona": "Planning",
+          "question": "How well did Pacific Materials fill orders?",
+          "value": 1.1681,
+          "metric_in_sql": true,
+          "time_s": 19.3
+        },
+        {
+          "persona": "Procurement",
+          "question": "What is Pacific Materials order fill rate?",
+          "value": 1.1681,
+          "metric_in_sql": true,
+          "time_s": 26.5
+        },
+        {
+          "persona": "Logistics",
+          "question": "What is the fulfillment rate for Pacific Materials?",
+          "value": 1.1681,
+          "metric_in_sql": true,
+          "time_s": 18.9
+        }
+      ]
+    },
+    {
+      "test_id": 3,
+      "title": "LANDED COST \u2014 Red Squares",
+      "metric": "total_landed_cost",
+      "gold_value": 2443552.48,
+      "verdict": "PASS",
+      "consistent": true,
+      "gold_match": true,
+      "personas": [
+        {
+          "persona": "Procurement",
+          "question": "What is the landed cost for Red Squares?",
+          "value": 2443552.48,
+          "metric_in_sql": true,
+          "time_s": 23.0
+        },
+        {
+          "persona": "Finance",
+          "question": "What is the fully loaded cost for Red Squares?",
+          "value": 2443552.48,
+          "metric_in_sql": true,
+          "time_s": 24.1
+        },
+        {
+          "persona": "Logistics",
+          "question": "What is the total cost for Red Squares?",
+          "value": 2443552.48,
+          "metric_in_sql": true,
+          "time_s": 26.5
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,293 @@
+SUPPLYCHAINOS — FAILING QUESTIONS (prioritised)
+Generated: 2026-09-24 22:39:37
+Total failures: 11 (7 Fail + 4 Partial)
+======================================================================
+
+[FAIL] Q014: Which parts have fewer than 10 days of inventory?
+  Category: ranking_filter
+  Expected metric: days_of_inventory
+  Issue: Row count: expected 2, got 8; Value match: 0/2
+  Variance: 100.0%
+  Gold result: [
+  {
+    "doi": 0.75,
+    "part": "Red Squares"
+  },
+  {
+    "doi": 2.36,
+    "part": "Yellow Circles"
+  }
+]
+  Agent result: [["Red Squares", "New York Facility", "0.00", "619.00", "0.00"], ["Red Squares", "Chicago Facility", "0.00", "665.00", "0.00"], ["Yellow Circles", "Houston Facility", "0.00", "716.00", "0.00"], ["Yell
+  Agent SQL: WITH __inventory AS (
+  SELECT
+    part_id,
+    plant_id,
+    snapshot_date,
+    daily_demand,
+    inventory_quantity
+  FROM SUPPLYCHAIN_DB.CORE.FACT_INVENTORY
+), __parts AS (
+  SELECT
+    part_name,
+
+
+[FAIL] Q016: How has OTD changed by month?
+  Category: temporal
+  Expected metric: on_time_delivery
+  Issue: Gold value not numeric: 2024-04
+  Gold result: [
+  {
+    "month": "2024-04",
+    "otd": 0.6981
+  }
+]
+  Agent result: [["2024-04-01", "0.69810000000000005", "159"]]
+  Agent SQL: WITH __shipments AS (
+  SELECT
+    is_valid_shipment,
+    arrival_date AS shipment_arrival_date,
+    requested_delivery_date AS shipment_requested_date
+  FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT
+)
+SELEC
+
+[FAIL] Q017: What was OTD last month?
+  Category: temporal
+  Expected metric: on_time_delivery
+  Issue: Agent value not numeric: 2024-04-17
+  Gold result: {
+  "otd": 0.6981
+}
+  Agent result: [["2024-04-17", "2024-04-29", "159"]]
+  Agent SQL: WITH __shipments AS (
+  SELECT
+    is_valid_shipment,
+    arrival_date AS shipment_arrival_date,
+    requested_delivery_date AS shipment_requested_date
+  FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT
+)
+SELEC
+
+[FAIL] Q018: Compare OTD between the first and second week of April
+  Category: temporal
+  Expected metric: on_time_delivery
+  Issue: Row count: expected 2, got 3; Value match: 0/2
+  Variance: 100.0%
+  Gold result: [
+  {
+    "otd": 0.5,
+    "week": "2024-04-01"
+  },
+  {
+    "otd": 0.7032,
+    "week": "2024-04-08"
+  }
+]
+  Agent result: [["2024-04-15", "0.67500000000000004", "40"], ["2024-04-22", "0.71430000000000005", "112"], ["2024-04-29", "0.57140000000000002", "7"]]
+  Agent SQL: WITH __shipments AS (
+  SELECT
+    is_valid_shipment,
+    arrival_date AS shipment_arrival_date,
+    requested_delivery_date AS shipment_requested_date
+  FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT
+)
+SELEC
+
+[FAIL] Q021: Which suppliers have both poor OTD and high landed cost?
+  Category: cross_metric
+  Expected metric: on_time_delivery+total_landed_cost
+  Issue: Agent value not numeric: Apex Components
+  Gold result: [
+  {
+    "landed": 5336097.68,
+    "otd": 0.6867,
+    "supplier": "Apex Components"
+  }
+]
+  Agent result: [["Apex Components", "0.68669999999999998", "5336097.68"], ["Pacific Materials", "0.72550000000000003", "2443552.48"], ["Midwest Supply Inc", "0.68000000000000005", "2414191.02"]]
+  Agent SQL: WITH __shipments AS (
+  SELECT
+    is_valid_shipment,
+    arrival_date AS shipment_arrival_date,
+    requested_delivery_date AS shipment_requested_date,
+    part_id,
+    shipment_line_id,
+    duty_cos
+
+[FAIL] Q023: Which plants are holding inventory for poorly performing suppliers?
+  Category: cross_metric
+  Expected metric: days_of_inventory+on_time_delivery
+  Issue: Row count: expected 5, got 12; Value match: 0/5
+  Variance: 100.0%
+  Gold result: [
+  {
+    "doi": 3.4,
+    "plant": "Houston",
+    "supplier": "Apex Components"
+  },
+  {
+    "doi": 17.73,
+    "plant": "New York",
+    "supplier": "Midwest Supply Inc"
+  },
+  {
+    "doi": 29.59,
+    
+  Agent result: [["Apex Components", "0.68669999999999998", "New York Facility", "7721.00"], ["Apex Components", "0.68669999999999998", "Chicago Facility", "7663.00"], ["Apex Components", "0.68669999999999998", "St. 
+  Agent SQL: WITH __inventory AS (
+  SELECT
+    part_id,
+    plant_id,
+    snapshot_date,
+    snapshot_date AS inventory_snapshot_date,
+    inventory_quantity
+  FROM SUPPLYCHAIN_DB.CORE.FACT_INVENTORY
+), __parts A
+
+[FAIL] Q024: Which late shipments are associated with high-risk routes?
+  Category: cross_metric
+  Expected metric: on_time_delivery
+  Issue: Row count: expected 5, got 3; Value match: 0/5
+  Variance: 100.0%
+  Gold result: [
+  {
+    "count": 3,
+    "dest": "New York",
+    "origin": "St. Louis"
+  },
+  {
+    "count": 3,
+    "dest": "New York",
+    "origin": "Houston"
+  },
+  {
+    "count": 3,
+    "dest": "Houston",
+    "or
+  Agent result: [["5d3b7d94-46c7-4bd0-968c-88c66c607b3b-3", "ORD-0030", "New York Facility", "Houston Facility", "Yellow Circles", "2024-04-25", "2024-04-29", "4", "High", "Investigate"], ["5d3b7d94-46c7-4bd0-968c-88
+  Agent SQL: WITH __shipments AS (
+  SELECT
+    decision,
+    destination_plant_id,
+    is_valid_shipment,
+    origin_plant_id,
+    risk_flag,
+    arrival_date AS shipment_arrival_date,
+    requested_delivery_date
+
+[PART] Q015: Which plants have the most late shipments?
+  Category: ranking_filter
+  Expected metric: on_time_delivery
+  Issue: Metric name not found in agent SQL/text
+  Variance: 0.0%
+  Gold result: [
+  {
+    "late": 19,
+    "plant": "New York Facility"
+  },
+  {
+    "late": 18,
+    "plant": "Chicago Facility"
+  },
+  {
+    "late": 10,
+    "plant": "Houston Facility"
+  },
+  {
+    "late": 1,
+    "pl
+  Agent result: [["New York Facility", "19", "69"], ["Chicago Facility", "18", "39"], ["Houston Facility", "10", "38"], ["St. Louis Facility", "1", "13"]]
+  Agent SQL: WITH __shipments AS (
+  SELECT
+    destination_plant_id,
+    is_valid_shipment,
+    arrival_date AS shipment_arrival_date,
+    requested_delivery_date AS shipment_requested_date
+  FROM SUPPLYCHAIN_DB.
+
+[PART] Q019: Which weeks had the best fill rate?
+  Category: temporal
+  Expected metric: fill_rate
+  Issue: Value match: 0/2
+  Variance: 100.0%
+  Gold result: [
+  {
+    "fill_rate": 0.9167,
+    "week": "2024-04-01"
+  },
+  {
+    "fill_rate": 0.9032,
+    "week": "2024-03-31"
+  }
+]
+  Agent result: [["2024-04-01", "0.9208", "71"], ["2024-04-08", "0.8406", "12"]]
+  Agent SQL: WITH __order_fulfillment AS (
+  SELECT
+    order_date AS fulfillment_order_date,
+    order_id,
+    ordered_quantity AS fulfillment_ordered,
+    shipped_quantity AS fulfillment_shipped
+  FROM SUPPLYCHA
+
+[PART] Q022: Which parts are causing inventory risk?
+  Category: cross_metric
+  Expected metric: days_of_inventory
+  Issue: Row count: expected 8, got 6; Value match: 6/8
+  Variance: 25.0%
+  Gold result: [
+  {
+    "doi": 0,
+    "part": "Red Squares",
+    "plant": "New York"
+  },
+  {
+    "doi": 0,
+    "part": "Red Squares",
+    "plant": "Chicago"
+  },
+  {
+    "doi": 0,
+    "part": "Yellow Circles",
+   
+  Agent result: [["Red Squares", "New York Facility", "0.00", "619.00", "0.00"], ["Red Squares", "Chicago Facility", "0.00", "665.00", "0.00"], ["Yellow Circles", "Houston Facility", "0.00", "716.00", "0.00"], ["Yell
+  Agent SQL: WITH __inventory AS (
+  SELECT
+    part_id,
+    plant_id,
+    snapshot_date,
+    daily_demand,
+    inventory_quantity
+  FROM SUPPLYCHAIN_DB.CORE.FACT_INVENTORY
+), __parts AS (
+  SELECT
+    part_name,
+
+
+[PART] Q025: Show supplier performance including OTD and fill rate for parts with low inventory
+  Category: cross_metric
+  Expected metric: on_time_delivery+fill_rate+days_of_inventory
+  Issue: Value match: 2/6
+  Variance: 66.67%
+  Gold result: [
+  {
+    "doi": 0.75,
+    "fill_rate": 1.1681,
+    "otd": 0.7255,
+    "part": "Red Squares",
+    "supplier": "Pacific Materials"
+  },
+  {
+    "doi": 2.36,
+    "fill_rate": 1.8779,
+    "otd": 0.68,
+  
+  Agent result: [["Midwest Supply Inc", "Yellow Circles", "0.68000000000000005"], ["Pacific Materials", "Red Squares", "0.72550000000000003"]]
+  Agent SQL: WITH __shipments AS (
+  SELECT
+    is_valid_shipment,
+    arrival_date AS shipment_arrival_date,
+    requested_delivery_date AS shipment_requested_date,
+    part_id
+  FROM SUPPLYCHAIN_DB.CORE.FACT_SHI
+
