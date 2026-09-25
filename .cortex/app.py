@@ -62,20 +62,26 @@ def get_session() -> Session:
         }).create()
 
     # 3. Streamlit secrets.toml (wrapped in try — file may not exist).
+    _secrets_error = None
     try:
         if "snowflake" in st.secrets:
             params = dict(st.secrets["snowflake"])
             params.setdefault("database", "SUPPLYCHAIN_DB")
             params.setdefault("schema", "CORE")
             return Session.builder.configs(params).create()
-    except Exception:
-        pass
+    except (FileNotFoundError, KeyError):
+        pass  # No secrets.toml — that's fine, fall through
+    except Exception as e:
+        _secrets_error = e  # Real connection error — surface it
 
-    # Nothing worked — raise so the error is visible, not swallowed.
-    raise RuntimeError(
+    # Nothing worked — raise with details.
+    msg = (
         "Cannot connect to Snowflake. Set SNOWFLAKE_DEFAULT_CONNECTION_NAME "
         "or create .streamlit/secrets.toml with [snowflake] credentials."
     )
+    if _secrets_error:
+        msg += f"\n\nSecrets.toml connection failed: {_secrets_error}"
+    raise RuntimeError(msg)
 
 
 def run_query(sql: str) -> pd.DataFrame:
