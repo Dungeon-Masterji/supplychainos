@@ -87,16 +87,22 @@ def get_session() -> Session:
 def run_query(sql: str) -> pd.DataFrame:
     """Execute SQL via Snowpark and return a pandas DataFrame with lowercase columns.
 
-    Raises on failure instead of returning an empty DataFrame so callers
-    never silently operate on missing data.  Automatically reconnects on
-    expired authentication tokens.
+    Automatically reconnects on any Snowflake session/auth error so the app
+    self-heals without a manual reboot.
     """
     try:
         session = get_session()
         df = session.sql(sql).to_pandas()
     except Exception as e:
-        if "390114" in str(e) or "Authentication token has expired" in str(e):
+        err = str(e)
+        if any(code in err for code in ("390114", "390112", "390111", "08001",
+                                         "token has expired", "not connected")):
+            try:
+                get_session().close()
+            except Exception:
+                pass
             get_session.clear()
+            st.cache_data.clear()
             session = get_session()
             df = session.sql(sql).to_pandas()
         else:
