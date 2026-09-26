@@ -88,10 +88,19 @@ def run_query(sql: str) -> pd.DataFrame:
     """Execute SQL via Snowpark and return a pandas DataFrame with lowercase columns.
 
     Raises on failure instead of returning an empty DataFrame so callers
-    never silently operate on missing data.
+    never silently operate on missing data.  Automatically reconnects on
+    expired authentication tokens.
     """
-    session = get_session()
-    df = session.sql(sql).to_pandas()
+    try:
+        session = get_session()
+        df = session.sql(sql).to_pandas()
+    except Exception as e:
+        if "390114" in str(e) or "Authentication token has expired" in str(e):
+            get_session.clear()
+            session = get_session()
+            df = session.sql(sql).to_pandas()
+        else:
+            raise
     df.columns = df.columns.str.lower()
     return df
 
