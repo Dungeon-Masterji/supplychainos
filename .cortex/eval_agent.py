@@ -149,31 +149,55 @@ def numbers_match(a, b, tol=TOLERANCE):
 
 
 def compare_single_value(gold_result, agent_data, agent_cols):
-    """Compare when gold is a single-row result (dict with one key metric).
+    """Compare when gold is a single-row result (dict with metric value(s)).
+
+    Handles both single-key dicts ({"otd": 0.6981}) and multi-key dicts
+    with dimension + metric columns ({"month": "2024-04", "otd": 0.6981}).
 
     Returns (match, variance_pct, notes).
     """
     if not agent_data or not agent_cols:
         return "Fail", None, "Agent returned no result data"
 
-    # Gold is a dict like {"otd": 0.6981}
     if isinstance(gold_result, dict):
-        gold_key = list(gold_result.keys())[0]
-        gold_val = to_number(gold_result[gold_key])
-        if gold_val is None:
-            return "Fail", None, f"Gold value not numeric: {gold_result[gold_key]}"
+        # Extract ALL numeric values from gold dict
+        gold_numerics = []
+        for k, v in gold_result.items():
+            n = to_number(v)
+            if n is not None:
+                gold_numerics.append((k, n))
 
-        # Agent returns [[value]] — grab first cell
-        if len(agent_data) >= 1 and len(agent_data[0]) >= 1:
-            agent_val = to_number(agent_data[0][0])
-            if agent_val is None:
-                return "Fail", None, f"Agent value not numeric: {agent_data[0][0]}"
-            if numbers_match(gold_val, agent_val):
-                var = abs(gold_val - agent_val) / max(abs(gold_val), 1e-9) * 100
-                return "Pass", round(var, 4), ""
-            else:
-                var = abs(gold_val - agent_val) / max(abs(gold_val), 1e-9) * 100
-                return "Fail", round(var, 4), f"Gold={gold_val}, Agent={agent_val}"
+        if not gold_numerics:
+            return "Fail", None, f"No numeric values in gold result: {gold_result}"
+
+        # Extract ALL numeric values from agent's first row
+        agent_numerics = []
+        if len(agent_data) >= 1:
+            for cell in agent_data[0]:
+                n = to_number(cell)
+                if n is not None:
+                    agent_numerics.append(n)
+
+        if not agent_numerics:
+            first_row = agent_data[0] if agent_data else []
+            return "Fail", None, f"No numeric values in agent result: {first_row}"
+
+        # Match each gold numeric to an agent numeric
+        matched = 0
+        max_var = 0.0
+        for gk, gn in gold_numerics:
+            for an in agent_numerics:
+                if numbers_match(gn, an):
+                    var = abs(gn - an) / max(abs(gn), 1e-9) * 100
+                    max_var = max(max_var, var)
+                    matched += 1
+                    break
+
+        if matched == len(gold_numerics):
+            return "Pass", round(max_var, 4), ""
+        else:
+            return "Fail", round((1 - matched / len(gold_numerics)) * 100, 2), \
+                f"Matched {matched}/{len(gold_numerics)} numeric values"
 
     return "Fail", None, "Could not parse gold result for single-value comparison"
 

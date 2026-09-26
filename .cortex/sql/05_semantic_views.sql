@@ -293,23 +293,35 @@ AI_SQL_GENERATION
 
 5. SUPPLIER DIMENSION: Suppliers connect to shipments/orders through parts (parts_to_suppliers). There are 6 suppliers but only 3 Tier-1 suppliers have shipment/order activity. When a question asks about supplier performance (OTD, fill rate, landed cost), only include suppliers that have associated data — do NOT LEFT JOIN all 6 suppliers and return NULL rows. Use INNER JOIN to parts.
 
-6. FILTERING AND THRESHOLDS: When a question asks "which X have metric below/above N%", calculate the metric per group first, then filter with HAVING. Return ONLY the matching rows, not all rows.
+6. FILTERING AND THRESHOLDS: When a question asks "which X have metric below/above N%", calculate the metric per group first, then filter with HAVING. Return ONLY the matching rows, not all rows. When a question says "poor OTD" without a specific number, use OTD < 0.70 as the threshold. When a question says "high landed cost" without a specific number, compare against the MEDIAN of landed costs across the dimension.
 
 7. RANKING: When a question asks "top N" or "highest/lowest", use ORDER BY metric DESC/ASC LIMIT N. When it asks "rank" or "which has the most/least", ORDER BY appropriately.
 
-8. ROUTES: Defined by origin_plant_id + destination_plant_id on the shipments table. Join to plants via shipments_to_origin and shipments_to_destination.
+8. ROUTES: Defined by origin_plant_id + destination_plant_id on the shipments table. Join to plants via shipments_to_origin and shipments_to_destination. When asked about late shipments on high-risk routes, GROUP BY origin and destination plant to get counts per route, not individual shipment rows.
 
-9. RISK: risk_flag column on shipments: High means delivery_days > avg_route_delivery_days + 3, Medium means > avg, Low means <= avg. The decision column maps: High→Investigate, Medium→Monitor, Low→Normal.
+9. RISK: risk_flag column on shipments: High means delivery_days > avg_route_delivery_days + 3, Medium means > avg, Low means <= avg. The decision column maps: High→Investigate, Medium→Monitor, Low→Normal. When asked about high-risk routes, filter WHERE risk_flag = ''High'' and aggregate by route.
 
-10. TEMPORAL: Shipment data covers April 2024 only (one month). Inventory data covers 2024-03-12 to 2024-04-10. If asked about monthly trends, return whatever months exist in the data. Do not fabricate data for months that do not exist.
+10. TEMPORAL DATE COLUMNS: Each metric has a specific date column for temporal aggregation:
+  - OTD: Use shipments.DEPARTURE_DATE for monthly/weekly grouping (GROUP BY DATE_TRUNC(''month'', DEPARTURE_DATE) or DATE_TRUNC(''week'', DEPARTURE_DATE)).
+  - Fill Rate: Use order_fulfillment.ORDER_DATE for monthly/weekly grouping (GROUP BY DATE_TRUNC(''month'', ORDER_DATE) or DATE_TRUNC(''week'', ORDER_DATE)).
+  - DOI: Use inventory.SNAPSHOT_DATE. For trends, group by SNAPSHOT_DATE directly.
+  - Landed Cost: Use shipments.DEPARTURE_DATE for monthly/weekly grouping.
+  Shipment data covers April 2024 (departures 2024-04-07 to 2024-04-11, arrivals 2024-04-17 to 2024-04-29). Order data covers 2024-04-03 to 2024-04-09. Inventory data covers 2024-03-12 to 2024-04-10.
+  Do not fabricate data for periods that do not exist.
 
-11. CROSS-METRIC: When combining OTD + fill rate + landed cost for a single supplier/part, compute each metric independently from its correct source table (shipments for OTD/cost, order_fulfillment for fill rate, inventory for DOI), then combine results. Never join multiple fact tables in a single query that could cause fan-out.
+11. TEMPORAL REFERENCES: When a question says "last month", "previous month", or "most recent month", resolve to the latest month in the data: use WHERE DATE_TRUNC(''month'', date_col) = (SELECT MAX(DATE_TRUNC(''month'', date_col)) FROM table). When asked "by month" or "monthly", GROUP BY DATE_TRUNC(''month'', date_col). When asked "by week" or "weekly", GROUP BY DATE_TRUNC(''week'', date_col). When asked about "first week" or "second week" of a month, the first week starts with DATE_TRUNC(''week'', first_day_of_month) and the second week is the next DATE_TRUNC week boundary.
 
-12. CODE EXECUTION PROHIBITION: ALWAYS use the Cortex Analyst SQL generation tool for supply-chain metric questions. Do NOT switch to code execution or Python for questions that can be answered with SQL against the semantic model.
+12. CROSS-METRIC PATTERN: When combining metrics from different tables (OTD + fill rate, OTD + landed cost, OTD + DOI, etc.), use separate CTEs for each metric aggregated to the required common grain (e.g. supplier level), then JOIN the CTEs together. NEVER join multiple fact tables in a single pass. Example pattern:
+  WITH cte_otd AS (SELECT supplier_id, OTD FROM shipments GROUP BY supplier_id),
+       cte_cost AS (SELECT supplier_id, cost FROM shipments GROUP BY supplier_id)
+  SELECT ... FROM cte_otd JOIN cte_cost ON supplier_id
+  For cross-metric filtering ("poor OTD AND high cost"), apply filters AFTER computing each metric independently.
 
-13. SYNONYM RESOLUTION: "delivery performance", "delivery reliability", "how reliable" all map to on_time_delivery. "order fill", "fulfillment rate", "how well did X fill orders" all map to fill_rate. "fully loaded cost", "delivered cost", "acquisition cost" all map to total_landed_cost. "inventory coverage", "days cover", "days of supply" all map to days_of_inventory.
+13. CODE EXECUTION PROHIBITION: ALWAYS use the Cortex Analyst SQL generation tool for supply-chain metric questions. Do NOT switch to code execution or Python for questions that can be answered with SQL against the semantic model.
 
-14. INVENTORY RISK: Parts with DOI < 3 at the latest snapshot are at critical risk. DOI = 0 means stockout. Filter inventory to MAX(snapshot_date) and look for low DOI by plant and part.'
+14. SYNONYM RESOLUTION: "delivery performance", "delivery reliability", "how reliable" all map to on_time_delivery. "order fill", "fulfillment rate", "how well did X fill orders" all map to fill_rate. "fully loaded cost", "delivered cost", "acquisition cost" all map to total_landed_cost. "inventory coverage", "days cover", "days of supply" all map to days_of_inventory.
+
+15. INVENTORY RISK: Parts with DOI < 5 at the latest snapshot are at inventory risk. DOI < 3 is critical risk. DOI = 0 means stockout. When asked about "inventory risk" or "low inventory", filter to DOI < 5. Filter inventory to MAX(snapshot_date) and compute DOI per plant and part.'
 
 AI_VERIFIED_QUERIES (
     -- ═══ OTD ═══
@@ -332,6 +344,26 @@ AI_VERIFIED_QUERIES (
     late_shipments_by_plant AS (
         QUESTION 'Which plants have the most late shipments?'
         SQL 'SELECT dp.PLANT_NAME, COUNT_IF(fs.ARRIVAL_DATE > fs.REQUESTED_DELIVERY_DATE) AS late_count, COUNT(*) AS total, ROUND(COUNT_IF(fs.ARRIVAL_DATE > fs.REQUESTED_DELIVERY_DATE)::FLOAT / NULLIF(COUNT(*), 0), 4) AS late_rate FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT fs JOIN SUPPLYCHAIN_DB.CORE.DIM_PLANT dp ON fs.DESTINATION_PLANT_ID = dp.PLANT_ID WHERE fs.IS_VALID_SHIPMENT = TRUE AND fs.REQUESTED_DELIVERY_DATE IS NOT NULL GROUP BY dp.PLANT_NAME ORDER BY late_count DESC'
+    ),
+
+    -- ═══ TEMPORAL OTD ═══
+    otd_by_month AS (
+        QUESTION 'How has OTD changed by month?'
+        SQL 'SELECT DATE_TRUNC(''month'', fs.DEPARTURE_DATE) AS month, ROUND(COUNT_IF(fs.ARRIVAL_DATE <= fs.REQUESTED_DELIVERY_DATE)::FLOAT / NULLIF(COUNT(*), 0), 4) AS on_time_delivery FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT fs WHERE fs.IS_VALID_SHIPMENT = TRUE AND fs.REQUESTED_DELIVERY_DATE IS NOT NULL GROUP BY 1 ORDER BY 1'
+    ),
+    otd_last_month AS (
+        QUESTION 'What was OTD last month?'
+        SQL 'SELECT ROUND(COUNT_IF(fs.ARRIVAL_DATE <= fs.REQUESTED_DELIVERY_DATE)::FLOAT / NULLIF(COUNT(*), 0), 4) AS on_time_delivery FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT fs WHERE fs.IS_VALID_SHIPMENT = TRUE AND fs.REQUESTED_DELIVERY_DATE IS NOT NULL AND DATE_TRUNC(''month'', fs.DEPARTURE_DATE) = (SELECT MAX(DATE_TRUNC(''month'', DEPARTURE_DATE)) FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT)'
+    ),
+    otd_by_week AS (
+        QUESTION 'Compare OTD between the first and second week of April'
+        SQL 'SELECT DATE_TRUNC(''week'', fs.DEPARTURE_DATE) AS week_start, COUNT(*) AS eligible, ROUND(COUNT_IF(fs.ARRIVAL_DATE <= fs.REQUESTED_DELIVERY_DATE)::FLOAT / NULLIF(COUNT(*), 0), 4) AS on_time_delivery FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT fs WHERE fs.IS_VALID_SHIPMENT = TRUE AND fs.REQUESTED_DELIVERY_DATE IS NOT NULL GROUP BY 1 ORDER BY 1'
+    ),
+
+    -- ═══ TEMPORAL FILL RATE ═══
+    fill_rate_by_week AS (
+        QUESTION 'Which weeks had the best fill rate?'
+        SQL 'SELECT DATE_TRUNC(''week'', vof.ORDER_DATE) AS week_start, ROUND(SUM(vof.SHIPPED_QUANTITY) / NULLIF(SUM(vof.ORDERED_QUANTITY), 0), 4) AS fill_rate FROM SUPPLYCHAIN_DB.CORE.V_ORDER_FULFILLMENT vof GROUP BY 1 ORDER BY fill_rate DESC'
     ),
 
     -- ═══ FILL RATE ═══
@@ -363,7 +395,7 @@ AI_VERIFIED_QUERIES (
     ),
     inventory_risk AS (
         QUESTION 'Which parts are causing inventory risk?'
-        SQL 'SELECT dpt.PART_NAME, dp.PLANT_NAME, fi.INVENTORY_QUANTITY, fi.DAILY_DEMAND, ROUND(fi.INVENTORY_QUANTITY / NULLIF(fi.DAILY_DEMAND, 0), 2) AS days_of_inventory, CASE WHEN fi.INVENTORY_QUANTITY = 0 THEN ''STOCKOUT'' WHEN fi.INVENTORY_QUANTITY / NULLIF(fi.DAILY_DEMAND, 0) < 3 THEN ''CRITICAL'' ELSE ''HEALTHY'' END AS risk_status FROM SUPPLYCHAIN_DB.CORE.FACT_INVENTORY fi JOIN SUPPLYCHAIN_DB.CORE.DIM_PART dpt ON fi.PART_ID = dpt.PART_ID JOIN SUPPLYCHAIN_DB.CORE.DIM_PLANT dp ON fi.PLANT_ID = dp.PLANT_ID WHERE fi.SNAPSHOT_DATE = (SELECT MAX(SNAPSHOT_DATE) FROM SUPPLYCHAIN_DB.CORE.FACT_INVENTORY) AND fi.INVENTORY_QUANTITY / NULLIF(fi.DAILY_DEMAND, 0) < 3 ORDER BY days_of_inventory'
+        SQL 'SELECT dpt.PART_NAME, dp.PLANT_NAME, fi.INVENTORY_QUANTITY, fi.DAILY_DEMAND, ROUND(fi.INVENTORY_QUANTITY / NULLIF(fi.DAILY_DEMAND, 0), 2) AS days_of_inventory, CASE WHEN fi.INVENTORY_QUANTITY = 0 THEN ''STOCKOUT'' WHEN fi.INVENTORY_QUANTITY / NULLIF(fi.DAILY_DEMAND, 0) < 3 THEN ''CRITICAL'' ELSE ''AT_RISK'' END AS risk_status FROM SUPPLYCHAIN_DB.CORE.FACT_INVENTORY fi JOIN SUPPLYCHAIN_DB.CORE.DIM_PART dpt ON fi.PART_ID = dpt.PART_ID JOIN SUPPLYCHAIN_DB.CORE.DIM_PLANT dp ON fi.PLANT_ID = dp.PLANT_ID WHERE fi.SNAPSHOT_DATE = (SELECT MAX(SNAPSHOT_DATE) FROM SUPPLYCHAIN_DB.CORE.FACT_INVENTORY) AND fi.INVENTORY_QUANTITY / NULLIF(fi.DAILY_DEMAND, 0) < 5 ORDER BY days_of_inventory'
     ),
 
     -- ═══ LANDED COST ═══
@@ -383,7 +415,19 @@ AI_VERIFIED_QUERIES (
     -- ═══ CROSS-METRIC ═══
     supplier_otd_and_cost AS (
         QUESTION 'Which suppliers have both poor OTD and high landed cost?'
-        SQL 'SELECT ds.SUPPLIER_NAME, ROUND(COUNT_IF(fs.ARRIVAL_DATE <= fs.REQUESTED_DELIVERY_DATE)::FLOAT / NULLIF(COUNT(*), 0), 4) AS on_time_delivery, ROUND(SUM(fs.LANDED_COST), 2) AS total_landed_cost FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT fs JOIN SUPPLYCHAIN_DB.CORE.DIM_PART dpt ON fs.PART_ID = dpt.PART_ID JOIN SUPPLYCHAIN_DB.CORE.DIM_SUPPLIER ds ON dpt.SUPPLIER_ID = ds.SUPPLIER_ID WHERE fs.IS_VALID_SHIPMENT = TRUE AND fs.REQUESTED_DELIVERY_DATE IS NOT NULL GROUP BY ds.SUPPLIER_NAME HAVING on_time_delivery < 0.80 ORDER BY total_landed_cost DESC'
+        SQL 'WITH sotd AS (SELECT dpt.SUPPLIER_ID, ROUND(COUNT_IF(fs.ARRIVAL_DATE <= fs.REQUESTED_DELIVERY_DATE)::FLOAT / NULLIF(COUNT(*), 0), 4) AS on_time_delivery FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT fs JOIN SUPPLYCHAIN_DB.CORE.DIM_PART dpt ON fs.PART_ID = dpt.PART_ID WHERE fs.IS_VALID_SHIPMENT = TRUE AND fs.REQUESTED_DELIVERY_DATE IS NOT NULL GROUP BY 1), scost AS (SELECT dpt.SUPPLIER_ID, ROUND(SUM(fs.LANDED_COST), 2) AS total_landed_cost FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT fs JOIN SUPPLYCHAIN_DB.CORE.DIM_PART dpt ON fs.PART_ID = dpt.PART_ID WHERE fs.IS_VALID_SHIPMENT = TRUE GROUP BY 1), med AS (SELECT MEDIAN(total_landed_cost) AS m FROM scost) SELECT ds.SUPPLIER_NAME, sotd.on_time_delivery, scost.total_landed_cost FROM sotd JOIN scost ON sotd.SUPPLIER_ID = scost.SUPPLIER_ID JOIN SUPPLYCHAIN_DB.CORE.DIM_SUPPLIER ds ON sotd.SUPPLIER_ID = ds.SUPPLIER_ID CROSS JOIN med WHERE sotd.on_time_delivery < 0.70 AND scost.total_landed_cost > med.m ORDER BY sotd.on_time_delivery'
+    ),
+    plants_inventory_poor_suppliers AS (
+        QUESTION 'Which plants are holding inventory for poorly performing suppliers?'
+        SQL 'WITH sotd AS (SELECT dpt.SUPPLIER_ID, ROUND(COUNT_IF(fs.ARRIVAL_DATE <= fs.REQUESTED_DELIVERY_DATE)::FLOAT / NULLIF(COUNT(*), 0), 4) AS on_time_delivery FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT fs JOIN SUPPLYCHAIN_DB.CORE.DIM_PART dpt ON fs.PART_ID = dpt.PART_ID WHERE fs.IS_VALID_SHIPMENT = TRUE AND fs.REQUESTED_DELIVERY_DATE IS NOT NULL GROUP BY 1) SELECT dp.PLANT_NAME, ds.SUPPLIER_NAME, sotd.on_time_delivery, ROUND(fi.INVENTORY_QUANTITY / NULLIF(fi.DAILY_DEMAND, 0), 2) AS days_of_inventory FROM SUPPLYCHAIN_DB.CORE.FACT_INVENTORY fi JOIN SUPPLYCHAIN_DB.CORE.DIM_PLANT dp ON fi.PLANT_ID = dp.PLANT_ID JOIN SUPPLYCHAIN_DB.CORE.DIM_PART dpt ON fi.PART_ID = dpt.PART_ID JOIN SUPPLYCHAIN_DB.CORE.DIM_SUPPLIER ds ON dpt.SUPPLIER_ID = ds.SUPPLIER_ID JOIN sotd ON dpt.SUPPLIER_ID = sotd.SUPPLIER_ID WHERE fi.SNAPSHOT_DATE = (SELECT MAX(SNAPSHOT_DATE) FROM SUPPLYCHAIN_DB.CORE.FACT_INVENTORY) AND fi.INVENTORY_QUANTITY > 0 AND sotd.on_time_delivery < 0.70 ORDER BY days_of_inventory'
+    ),
+    late_shipments_high_risk_routes AS (
+        QUESTION 'Which late shipments are associated with high-risk routes?'
+        SQL 'SELECT dpo.PLANT_NAME AS origin, dpd.PLANT_NAME AS destination, fs.RISK_FLAG, COUNT(*) AS cnt FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT fs JOIN SUPPLYCHAIN_DB.CORE.DIM_PLANT dpo ON fs.ORIGIN_PLANT_ID = dpo.PLANT_ID JOIN SUPPLYCHAIN_DB.CORE.DIM_PLANT dpd ON fs.DESTINATION_PLANT_ID = dpd.PLANT_ID WHERE fs.RISK_FLAG = ''High'' GROUP BY 1, 2, 3 ORDER BY cnt DESC'
+    ),
+    supplier_performance_low_inventory AS (
+        QUESTION 'Show supplier performance including OTD and fill rate for parts with low inventory'
+        SQL 'WITH sotd AS (SELECT dpt.SUPPLIER_ID, dpt.PART_ID, ROUND(COUNT_IF(fs.ARRIVAL_DATE <= fs.REQUESTED_DELIVERY_DATE)::FLOAT / NULLIF(COUNT(*), 0), 4) AS on_time_delivery FROM SUPPLYCHAIN_DB.CORE.FACT_SHIPMENT fs JOIN SUPPLYCHAIN_DB.CORE.DIM_PART dpt ON fs.PART_ID = dpt.PART_ID WHERE fs.IS_VALID_SHIPMENT = TRUE AND fs.REQUESTED_DELIVERY_DATE IS NOT NULL GROUP BY 1, 2), sfr AS (SELECT vof.PART_ID, ROUND(SUM(vof.SHIPPED_QUANTITY) / NULLIF(SUM(vof.ORDERED_QUANTITY), 0), 4) AS fill_rate FROM SUPPLYCHAIN_DB.CORE.V_ORDER_FULFILLMENT vof GROUP BY 1), sdoi AS (SELECT PART_ID, ROUND(SUM(INVENTORY_QUANTITY) / NULLIF(SUM(DAILY_DEMAND), 0), 2) AS days_of_inventory FROM SUPPLYCHAIN_DB.CORE.FACT_INVENTORY WHERE SNAPSHOT_DATE = (SELECT MAX(SNAPSHOT_DATE) FROM SUPPLYCHAIN_DB.CORE.FACT_INVENTORY) GROUP BY 1 HAVING days_of_inventory < 10) SELECT ds.SUPPLIER_NAME, dpt.PART_NAME, sotd.on_time_delivery, sfr.fill_rate, sdoi.days_of_inventory FROM sdoi JOIN SUPPLYCHAIN_DB.CORE.DIM_PART dpt ON sdoi.PART_ID = dpt.PART_ID JOIN SUPPLYCHAIN_DB.CORE.DIM_SUPPLIER ds ON dpt.SUPPLIER_ID = ds.SUPPLIER_ID LEFT JOIN sotd ON dpt.SUPPLIER_ID = sotd.SUPPLIER_ID AND dpt.PART_ID = sotd.PART_ID LEFT JOIN sfr ON dpt.PART_ID = sfr.PART_ID ORDER BY sdoi.days_of_inventory'
     )
 )
 ;

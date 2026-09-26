@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-24T22:49:48.756815",
+  "generated": "2026-09-27T01:11:54.726762",
   "agent": "SUPPLYCHAIN_DB.SEMANTIC.SUPPLYCHAINOS_AGENT",
   "tolerance": 0.02,
   "total_cases": 3,
@@ -19,21 +19,21 @@
           "question": "What is the delivery performance for Apex Components?",
           "value": 0.6867,
           "metric_in_sql": true,
-          "time_s": 29.1
+          "time_s": 24.7
         },
         {
           "persona": "Procurement",
           "question": "How reliable is Apex Components at on-time delivery?",
           "value": 0.6867,
           "metric_in_sql": true,
-          "time_s": 32.5
+          "time_s": 34.5
         },
         {
           "persona": "Logistics",
           "question": "What percentage of Apex Components shipments arrived on time?",
           "value": 0.6867,
           "metric_in_sql": true,
-          "time_s": 22.4
+          "time_s": 21.0
         }
       ]
     },
@@ -51,21 +51,21 @@
           "question": "How well did Pacific Materials fill orders?",
           "value": 1.1681,
           "metric_in_sql": true,
-          "time_s": 19.3
+          "time_s": 30.7
         },
         {
           "persona": "Procurement",
           "question": "What is Pacific Materials order fill rate?",
           "value": 1.1681,
           "metric_in_sql": true,
-          "time_s": 26.5
+          "time_s": 25.9
         },
         {
           "persona": "Logistics",
           "question": "What is the fulfillment rate for Pacific Materials?",
           "value": 1.1681,
           "metric_in_sql": true,
-          "time_s": 18.9
+          "time_s": 22.1
         }
       ]
     },
@@ -83,21 +83,21 @@
           "question": "What is the landed cost for Red Squares?",
           "value": 2443552.48,
           "metric_in_sql": true,
-          "time_s": 23.0
+          "time_s": 22.1
         },
         {
           "persona": "Finance",
           "question": "What is the fully loaded cost for Red Squares?",
           "value": 2443552.48,
           "metric_in_sql": true,
-          "time_s": 24.1
+          "time_s": 24.8
         },
         {
           "persona": "Logistics",
           "question": "What is the total cost for Red Squares?",
           "value": 2443552.48,
           "metric_in_sql": true,
-          "time_s": 26.5
+          "time_s": 24.4
         }
       ]
     }

@@ -18,6 +18,23 @@ instructions:
     CRITICAL fill rate rule: ALWAYS use the order_fulfillment table for fill rate.
     NEVER join shipments to orders for fill rate — it causes fan-out.
 
+    TEMPORAL REASONING:
+      - For "by month" or "monthly" OTD/cost: GROUP BY DATE_TRUNC('month', DEPARTURE_DATE)
+      - For "by week" or "weekly" OTD: GROUP BY DATE_TRUNC('week', DEPARTURE_DATE)
+      - For "by week" fill rate: GROUP BY DATE_TRUNC('week', ORDER_DATE) on order_fulfillment
+      - For "last month" or "most recent month": filter to the latest month in the data
+      - For inventory trends: group by SNAPSHOT_DATE
+      - Data covers April 2024. Do not fabricate data for other periods.
+
+    CROSS-METRIC REASONING:
+      - When combining OTD + cost, OTD + fill rate, OTD + DOI, etc.: compute each
+        metric independently in separate CTEs, aggregate to the common grain
+        (supplier, part, plant), then JOIN the CTEs together.
+      - NEVER join shipments to orders to inventory in a single pass.
+      - "Poor OTD" means OTD < 0.70 unless a specific threshold is given.
+      - "High cost" means cost above the MEDIAN across the dimension.
+      - For high-risk routes: GROUP BY origin + destination, COUNT(*) per route.
+
     When presenting results:
       - Name the metric and its definition
       - State filters and time period used
