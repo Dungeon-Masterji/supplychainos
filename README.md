@@ -1057,7 +1057,7 @@ The result is a conversational analytics workflow where the agent is grounded in
 
 ## 29. Demo
 
-**Demo video:** [Watch the demo](<DEMO_VIDEO_URL>)
+**Demo video:** [Watch the demo](https://drive.google.com/file/d/1czje0GhAhHDRYsUBAkgYxXCTisMFwpiN/view?usp=sharing)
 
 The demo should show an end-to-end CoCo workflow:
 
