@@ -8,7 +8,7 @@
 **Hackathon:** Snowflake CoCo CLI Hackathon — GCC Edition  
 **Challenge:** Supply Chain Ontology and Governed Conversational Analytics
 
-[Demo Video](<[DEMO_VIDEO_URL](https://drive.google.com/file/d/1czje0GhAhHDRYsUBAkgYxXCTisMFwpiN/view?usp=sharing)>) · [Architecture](#architecture) · [Evaluation](#evaluation-framework) · [Quick Start](#quick-start)
+[Demo Video]([<DEMO_VIDEO_URL>](https://drive.google.com/file/d/1czje0GhAhHDRYsUBAkgYxXCTisMFwpiN/view?usp=sharing)) · [Architecture](#architecture) · [Evaluation](#evaluation-framework) · [Quick Start](#quick-start)
 
 ---
 
@@ -123,6 +123,8 @@ The system defines the supply-chain entities and relationships once, establishes
 | Demonstrate trustworthy answers | Gold-standard evaluation, VQRs, SQL guardrails and fanout prevention |
 
 ---
+
+<a id="architecture"></a>
 
 ## 4. Architecture
 
@@ -562,6 +564,8 @@ Tested metrics include:
 
 ---
 
+<a id="evaluation-framework"></a>
+
 ## 15. Evaluation
 
 SupplyChainOS includes a 30-question gold-standard evaluation suite.
@@ -800,6 +804,8 @@ SupplyChainOS/                          <- PROJECT ROOT (root of repo)
 ```
 
 ---
+
+<a id="quick-start"></a>
 
 ## 21. Quick Start
 
@@ -1047,9 +1053,11 @@ The result is a conversational analytics workflow where the agent is grounded in
 
 ---
 
+<a id="demo"></a>
+
 ## 29. Demo
 
-**Demo video:** `<DEMO_VIDEO_URL>`
+**Demo video:** [Watch the demo](<DEMO_VIDEO_URL>)
 
 The demo should show an end-to-end CoCo workflow:
 
