@@ -504,7 +504,21 @@ The project also uses CoCo to work with the synthetic data, semantic model and e
 
 ---
 
-## 13. Synthetic Data
+## 13. Data Sources
+
+### Source Data
+
+The source shipment data used by SupplyChainOS was accessed through a
+Palantir Foundry environment and is not publicly hosted.
+
+- **Source:** Palantir Foundry environment
+- **Public dataset URL:** Not available
+- **Access:** Non-public / environment-provided
+- **Usage:** Used as the foundational shipment data for this prototype.
+
+---
+
+## 14. Synthetic Data
 
 The project extends the available shipment data with a synthetic supply-chain layer so the required business entities can be represented without relying on production data.
 
@@ -531,7 +545,7 @@ The synthetic layer is designed to maintain the relationships required by the on
 
 ---
 
-## 14. Persona Consistency
+## 15. Persona Consistency
 
 The challenge requires the same metric to resolve consistently across personas.
 
@@ -566,7 +580,7 @@ Tested metrics include:
 
 <a id="evaluation-framework"></a>
 
-## 15. Evaluation
+## 16. Evaluation
 
 SupplyChainOS includes a 30-question gold-standard evaluation suite.
 
@@ -589,7 +603,7 @@ SupplyChainOS includes a 30-question gold-standard evaluation suite.
 
 ---
 
-## 16. Evaluation Results
+## 17. Evaluation Results
 
 ### Current results
 
@@ -672,7 +686,7 @@ The limitation is in the scoring harness rather than the returned analytical val
 
 ---
 
-## 17. Example Agent Questions
+## 18. Example Agent Questions
 
 The agent is evaluated against questions such as:
 
@@ -695,7 +709,7 @@ The application exposes both the natural-language interaction and the governed a
 
 ---
 
-## 18. Application
+## 19. Application
 
 ### KPI Dashboard
 
@@ -726,7 +740,7 @@ Displays Semantic View metadata, including tables, relationships, metrics and ve
 
 ---
 
-## 19. Snowflake Objects
+## 20. Snowflake Objects
 
 | Object | Type | Location |
 |---|---|---|
@@ -745,7 +759,7 @@ Displays Semantic View metadata, including tables, relationships, metrics and ve
 
 ---
 
-## 20. Project Structure
+## 21. Project Structure
 
 ```
 SupplyChainOS/                          <- PROJECT ROOT (root of repo)
@@ -807,7 +821,7 @@ SupplyChainOS/                          <- PROJECT ROOT (root of repo)
 
 <a id="quick-start"></a>
 
-## 21. Quick Start
+## 22. Quick Start
 
 ### Prerequisites
 
@@ -876,7 +890,7 @@ http://localhost:8501
 
 ---
 
-## 22. Evaluation Commands
+## 23. Evaluation Commands
 
 ### Agent evaluation
 
@@ -908,7 +922,7 @@ evaluation/persona_consistency_results.json
 
 ---
 
-## 23. Usage Examples
+## 24. Usage Examples
 
 ### Query the Semantic View
 
@@ -948,7 +962,7 @@ session = Session.builder.configs(connection_params).create()
 
 ---
 
-## 24. Deployment
+## 25. Deployment
 
 SupplyChainOS is designed around Snowflake as the governed data and intelligence platform.
 
@@ -975,7 +989,7 @@ The application supports:
 
 ---
 
-## 25. Limitations
+## 26. Limitations
 
 Current scope focuses on **governed analytical conversational workflows**.
 
@@ -991,7 +1005,7 @@ These are potential future extensions rather than implemented capabilities.
 
 ---
 
-## 26. Future Scope
+## 27. Future Scope
 
 Potential extensions include:
 
@@ -1007,7 +1021,7 @@ Potential extensions include:
 
 ---
 
-## 27. Why SupplyChainOS
+## 28. Why SupplyChainOS
 
 SupplyChainOS is not simply a chatbot over supply-chain tables.
 
@@ -1038,7 +1052,7 @@ The result is a conversational analytics workflow where the agent is grounded in
 
 ---
 
-## 28. Technology Stack
+## 29. Technology Stack
 
 | Layer | Technology |
 |---|---|
@@ -1055,7 +1069,7 @@ The result is a conversational analytics workflow where the agent is grounded in
 
 <a id="demo"></a>
 
-## 29. Demo
+## 30. Demo
 
 **Demo video:** [Watch the demo](https://drive.google.com/file/d/1czje0GhAhHDRYsUBAkgYxXCTisMFwpiN/view?usp=sharing)
 
@@ -1087,7 +1101,7 @@ Recommended demo flow:
 
 ---
 
-## 30. Team
+## 31. Team
 
 ### OntoCoCo
 
@@ -1099,6 +1113,8 @@ Recommended demo flow:
 
 ---
 
-## License
+## Built With
 
-MIT
+Built with Snowflake CoCo CLI 🐧.
+
+Made with love, curiosity, and a lot of semantic modeling.
