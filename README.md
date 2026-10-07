@@ -8,7 +8,7 @@
 **Hackathon:** Snowflake CoCo CLI Hackathon — GCC Edition  
 **Challenge:** Supply Chain Ontology and Governed Conversational Analytics
 
-[Demo Video](https://drive.google.com/file/d/1czje0GhAhHDRYsUBAkgYxXCTisMFwpiN/view?usp=sharing) · [Architecture](#architecture) · [Evaluation](#evaluation-framework) · [Quick Start](#quick-start)
+[Live App ](supplychainos-dungeonmasterji.streamlit.app)[Demo Video](https://drive.google.com/file/d/1czje0GhAhHDRYsUBAkgYxXCTisMFwpiN/view?usp=sharing) · [Architecture](#architecture) · [Evaluation](#evaluation-framework) · [Quick Start](#quick-start)
 
 ---
 
